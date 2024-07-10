@@ -25,12 +25,6 @@ enum layers {
     _FUNCTION,
     _NAV,
     _ADJUST,
-    // Second stack of layers for the MAC layout
-    _MAC_QWERTZ,
-    _MAC_SYM,
-    _MAC_FUNCTION,
-    _MAC_NAV,
-    _MAC_ADJUST,
 };
 
 // Aliases for readability
@@ -53,39 +47,13 @@ enum layers {
 #define LSFT_CAP TD(TD_LSHIFT_CAPS)
 #define RSFT_CAP TD(TD_RSHIFT_CAPS)
 
-// MAC Keyboard special cases
-#define MC_HOME   LGUI(KC_LEFT)
-#define MC_END    LGUI(KC_RIGHT)
-#define MC_LCBR   RALT(KC_8)
-#define MC_RCBR   RALT(KC_9)
-#define MC_LBRC   RALT(KC_5)
-#define MC_RBRC   RALT(KC_6)
-#define MC_BSLS   RALT(S(KC_7))
-#define MC_AT     RALT(KC_L)
-#define MC_TILD   RALT(KC_N)
-#define MC_PIPE   RALT(KC_7)
-#define MC_LABK   DE_CIRC
-#define MC_RABK   DE_DEG
-#define MC_CIRC   DE_LABK
-#define MC_DEG    DE_RABK
-
 
 // OS Detection on USB Init
-
 os_variant_t detected_os = OS_UNSURE;
 
 bool process_detected_host_os_user(os_variant_t os_variant) {
+    // locally store detected OS
     detected_os = os_variant;
-
-    switch (detected_os) {
-        case OS_MACOS:
-        case OS_IOS:
-            default_layer_set(1 << _MAC_QWERTZ);
-            break;
-        default:
-            break; // Do nothing for all the other OS
-    }
-
     return true;
 }
 
@@ -138,6 +106,7 @@ const key_override_t **key_overrides = (const key_override_t *[]){
 	NULL // Null terminate the array of overrides!
 };
 
+
 // Custom Keycodes
 
 enum custom_keycodes {
@@ -155,104 +124,85 @@ enum custom_keycodes {
     XX_RABK,
     XX_CIRC,
     XX_DEG,
+    XX_OST, // custom keycode to toggle the OS manually
 };
 
-bool xx_handle_code(uint16_t keycode, keyrecord_t *record) {
-    if (record->event.pressed) {
-        register_code16(keycode);
-    } else {
-        unregister_code16(keycode);
-    }
-    return true;
-}
+// Two custom macros to increase readability in mapping and lookup
+#define XX_MAPPING(from_code, to_code) [from_code - SAFE_RANGE] = to_code
+#define XX_LOOKUP(table, keycode) table[keycode - SAFE_RANGE]
 
-bool xx_process_mac_code(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case XX_HOME:
-            return xx_handle_code(LGUI(KC_LEFT), record);
-        case XX_END:
-            return xx_handle_code(LGUI(KC_RIGHT), record);
-        case XX_LCBR:
-            return xx_handle_code(RALT(KC_8), record);
-        case XX_RCBR:
-            return xx_handle_code(RALT(KC_9), record);
-        case XX_LBRC:
-            return xx_handle_code(RALT(KC_5), record);
-        case XX_RBRC:
-            return xx_handle_code(RALT(KC_6), record);
-        case XX_BSLS:
-            return xx_handle_code(RALT(S(KC_7)), record);
-        case XX_AT:
-            return xx_handle_code(RALT(KC_L), record);
-        case XX_TILD:
-            return xx_handle_code(RALT(KC_N), record);
-        case XX_PIPE:
-            return xx_handle_code(RALT(KC_7), record);
-        case XX_LABK:
-            return xx_handle_code(DE_CIRC, record);
-        case XX_RABK:
-            return xx_handle_code(DE_DEG, record);
-        case XX_CIRC:
-            return xx_handle_code(DE_LABK, record);
-        case XX_DEG:
-            return xx_handle_code(DE_RABK, record);
-        default:
-            return false;
-    }
-}
+// We do the mapping of keycodes via lookup tables
+// the macros help us create zero indexed arrays without
+// too much verbosity.
+const uint16_t PROGMEM mac_keycodes[] = {
+    XX_MAPPING(XX_HOME, LGUI(KC_LEFT)),
+    XX_MAPPING(XX_END,  LGUI(KC_RIGHT)),
+    XX_MAPPING(XX_LCBR, RALT(KC_8)),
+    XX_MAPPING(XX_RCBR, RALT(KC_9)),
+    XX_MAPPING(XX_LBRC, RALT(KC_5)),
+    XX_MAPPING(XX_RBRC, RALT(KC_6)),
+    XX_MAPPING(XX_BSLS, RALT(S(KC_7))),
+    XX_MAPPING(XX_AT, RALT(KC_L)),
+    XX_MAPPING(XX_TILD, RALT(KC_N)),
+    XX_MAPPING(XX_PIPE, RALT(KC_7)),
+    XX_MAPPING(XX_LABK, DE_CIRC),
+    XX_MAPPING(XX_RABK, DE_DEG),
+    XX_MAPPING(XX_CIRC, DE_LABK),
+    XX_MAPPING(XX_DEG, DE_RABK)
+};
 
-bool xx_process_other_code(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case XX_HOME:
-            return xx_handle_code(KC_HOME, record);
-        case XX_END:
-            return xx_handle_code(KC_END, record);
-        case XX_LCBR:
-            return xx_handle_code(DE_LCBR, record);
-        case XX_RCBR:
-            return xx_handle_code(DE_RCBR, record);
-        case XX_LBRC:
-            return xx_handle_code(DE_LBRC, record);
-        case XX_RBRC:
-            return xx_handle_code(DE_RBRC, record);
-        case XX_BSLS:
-            return xx_handle_code(DE_BSLS, record);
-        case XX_AT:
-            return xx_handle_code(DE_AT, record);
-        case XX_TILD:
-            return xx_handle_code(DE_TILD, record);
-        case XX_PIPE:
-            return xx_handle_code(DE_PIPE, record);
-        case XX_LABK:
-            return xx_handle_code(DE_LABK, record);
-        case XX_RABK:
-            return xx_handle_code(DE_RABK, record);
-        case XX_CIRC:
-            return xx_handle_code(DE_CIRC, record);
-        case XX_DEG:
-            return xx_handle_code(DE_DEG, record);
-        default:
-            return false;
-    }
-}
+const uint16_t PROGMEM other_keycodes[] = {
+    XX_MAPPING(XX_HOME, KC_HOME),
+    XX_MAPPING(XX_END, KC_END),
+    XX_MAPPING(XX_LCBR, DE_LCBR),
+    XX_MAPPING(XX_RCBR, DE_RCBR),
+    XX_MAPPING(XX_LBRC, DE_LBRC),
+    XX_MAPPING(XX_RBRC, DE_RBRC),
+    XX_MAPPING(XX_BSLS, DE_BSLS),
+    XX_MAPPING(XX_AT, DE_AT),
+    XX_MAPPING(XX_TILD, DE_TILD),
+    XX_MAPPING(XX_PIPE, DE_PIPE),
+    XX_MAPPING(XX_LABK, DE_LABK),
+    XX_MAPPING(XX_RABK, DE_RABK),
+    XX_MAPPING(XX_CIRC, DE_CIRC),
+    XX_MAPPING(XX_DEG, DE_DEG),
+};
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (keycode >= XX_HOME && keycode <= XX_DEG) {
+        uint16_t translated_keycode;
         switch (detected_os) {
             case OS_MACOS:
             case OS_IOS:
-                return xx_process_mac_code(keycode, record);
+                translated_keycode = XX_LOOKUP(mac_keycodes, keycode);
+                break;
             default:
-                return xx_process_other_code(keycode, record);
+                translated_keycode = XX_LOOKUP(other_keycodes, keycode);
+                break;
         }
+
+        if (record->event.pressed) {
+            register_code16(translated_keycode);
+        } else {
+            unregister_code16(translated_keycode);
+        }
+        return false;
+    } else if (keycode == XX_OST && record->event.pressed) {
+        switch (detected_os) {
+            case OS_MACOS:
+            case OS_IOS:
+                detected_os = OS_LINUX;
+                break;
+            default:
+                detected_os = OS_MACOS;
+        }
+        return false;
     }
     return true;
 }
 
 
-
-
-
+// Keymap Layer definition
 
 
 // clang-format off
@@ -309,10 +259,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * `-----------------------------'      `------'                `---------------------------'      '------'
  */
     [_SYM] = LAYOUT_myr(
-      _______, DE_CIRC,  DE_DEG, DE_TILD, DE_COMM,  DE_DOT,          _______, _______,          DE_DLR , DE_EURO, DE_PERC, DE_ACUT, DE_GRV , _______,
-      DE_DQUO, DE_PIPE,  DE_AT , DE_LCBR, DE_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
-      DE_QUOT, DE_BSLS, DE_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
-      _______, DE_SECT, DE_RABK, DE_LBRC, DE_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
+      _______, XX_CIRC,  XX_DEG, XX_TILD, DE_COMM,  DE_DOT,          _______, _______,          DE_DLR , DE_EURO, DE_PERC, DE_ACUT, DE_GRV , _______,
+      DE_DQUO, XX_PIPE,  XX_AT , XX_LCBR, XX_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
+      DE_QUOT, XX_BSLS, XX_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
+      _______, DE_SECT, XX_RABK, XX_LBRC, XX_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
                                  _______, _______, _______, _______, _______, _______, _______, RALT_0 , _______, _______,
 
       _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
@@ -370,7 +320,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
     [_NAV] = LAYOUT_myr(
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_DEL , KC_INS , KC_SCRL, KC_PSCR, _______, _______,
-      _______, _______, _______, _______, _______, _______,          _______, _______,          XX_HOME, KC_PGDN, KC_PGUP,  KC_END, KC_VOLU, _______,
+      _______, _______, _______, _______, _______, _______,          _______, _______,          XX_HOME, KC_PGDN, KC_PGUP,  XX_END, KC_VOLU, _______,
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VOLD, _______,
       _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,KC_PAUSE, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, _______,
                                  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
@@ -384,9 +334,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * ,-------------------------------------------.      ,------.  ,------.      ,-------------------------------------------.
  * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
  * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |      |      |MAQUER|      |      |      |      |  |      |      |      |      |      |      |      |        |
+ * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
  * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |      |      |      |      |      |      |      |  |      |      | TOG  | SAI  | HUI  | VAI  | MOD  |        |
+ * |        |      |      |      | OS   |      |      |      |  |      |      | TOG  | SAI  | HUI  | VAI  | MOD  |        |
  * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+--------|
  * |        |      |      |      |      |      |      |      |  |      |      |      | SAD  | HUD  | VAD  | RMOD |        |
  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
@@ -400,167 +350,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
     [_ADJUST] = LAYOUT_myr(
       _______, _______, _______, _______, _______, _______,         _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______, _______, _______, MCQWER , _______, _______,         _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______, _______, _______, _______, _______, _______,         _______, _______,          RGB_TOG, RGB_SAI, RGB_HUI, RGB_VAI, RGB_SPI, RGB_MOD,
-      _______, _______, _______, _______, _______, _______,_______, _______, _______, _______, _______, RGB_SAD, RGB_HUD, RGB_VAD, RGB_SPD, RGB_RMOD,
-                                 _______, _______, _______,_______, _______, _______, _______, _______, _______, _______,
-
-      _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
-
-    ),
-
-/*
- * Base Layer: MAC QWERTY
- *
- * ,-------------------------------------------.      ,------.  ,------.      ,------------------------------------------------.
- * |  Esc   |   1  |   2  |   3  |   4  |   5  |      |LShift|  |RShift|      |   6  |   7  |   8  |   9  |   0  |  Bksp DEL?  |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+-------------|
- * |  Tab   |   Q  |   W  |   E  |   R  |   T  |      |LCtrl |  | RCtrl|      |   Z  |   U  |   I  |   O  |   P  |  Ü          |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+-------------|
- * |Ctrl/Esc|   A  |   S  |   D  |   F  |   G  |      | LAlt |  | RAlt |      |   H  |   J  |   K  |   L  |   Ö  |Ctrl/Ä       |
- * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+-------------|
- * | LShift |   Z  |   X  |   C  |   V  |   B  |  !   |CapsLk|  |F-keys|   ?  |   N  |   M  | ,  ; | . :  | - _  | RShift      |
- * `----------------------+------+------+------+------+------|  |------+------+------+------+------+---------------------------'
- *                        |Adjust| LGUI | LAlt | Enter| Nav  |  | Sym  | Space| AltGr| RGUI | Menu |
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        `----------------------------------'  `----------------------------------'
- *
- * ,----------------------------.      ,------.                 ,----------------------------.      ,------.
- * | Prev | Next | Pause | Stop |      | Mute |                 | Prev | Next | Pause | Stop |      | Mute |
- * `----------------------------'      `------'                 `----------------------------'      '------'
- */
-    [_MAC_QWERTZ] = LAYOUT_myr(
-      KC_ESC  , KC_1 ,  KC_2   ,  KC_3  ,   KC_4 ,   KC_5 ,         KC_LSFT,     KC_RSFT,          KC_6 ,   KC_7 ,   KC_8 ,   KC_9 ,   KC_0 , KC_BSPC,
-      KC_TAB  , KC_Q ,  KC_W   ,  KC_E  ,   KC_R ,   KC_T ,         KC_LCTL,     KC_RCTL,          DE_Z ,   KC_U ,   KC_I ,   KC_O ,   KC_P , DE_UDIA,
-      CTL_ESC , KC_A ,  S_SZ   ,  KC_D  ,   KC_F ,   KC_G ,         KC_LALT,     KC_RALT,          KC_H ,   KC_J ,   KC_K ,   KC_L , DE_ODIA, CTL_ADIA,
-      LSFT_CAP, DE_Y ,  KC_X   ,  KC_C  ,   KC_V ,   KC_B , DE_EXLM,KC_CAPS,     MCFKEY , DE_QUES, KC_N ,   KC_M ,   KC_COMM, KC_DOT,KC_SLSH, RSFT_CAP,
-                                 MCADJU , KC_LGUI, KC_LALT, KC_ENT , MCNAV ,     MCSYM  , KC_SPC , KC_RALT, KC_RGUI, KC_APP,
-
-      KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP,    KC_MUTE,                            KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP,    KC_MUTE
-    ),
-
-
-/*
- * Sym Layer: Numbers and symbols
- *
- * ,-------------------------------------------.      ,------.  ,------.      ,-------------------------------------------.
- * |        |  ^   |  °   |  ~   |  ,   |  .   |      |      |  |      |      |   $  |   €  |  %   |  ´   |   `  |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |    "   |  |   |  @   |  {   |  }   |  #   |      |      |  |      |      |   +  |  1   |  2   |  3   |  /   |   *    |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * | Ctrl/' |  \   |  !   |  (   |  )   |  :   |      |      |  |      |      |   -  |  4   |  5   |  6   |  0   |Ctrl/&  |
- * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+--------|
- * |        |  §   |  ?   |  [   |  ]   |  ;   |  <   |      |  |      |   >  |   =  |  7   |  8   |  9   |  _   |        |
- * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        `----------------------------------'  `----------------------------------'
- *
- * ,-----------------------------.      ,------.                ,---------------------------.      ,------.
- * |        |      |      |      |      |      |                |      |      |      |      |      |      |
- * `-----------------------------'      `------'                `---------------------------'      '------'
- */
-    [_MAC_SYM] = LAYOUT_myr(
-      _______, MC_CIRC,  MC_DEG, MC_TILD, DE_COMM,  DE_DOT,          _______, _______,          DE_DLR , DE_EURO, DE_PERC, DE_ACUT, DE_GRV , _______,
-      DE_DQUO, MC_PIPE,  MC_AT , MC_LCBR, MC_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
-      DE_QUOT, MC_BSLS, MC_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
-      _______, DE_SECT, MC_RABK, MC_LBRC, MC_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
-                                 _______, _______, _______, _______, _______, _______, _______, RALT_0 , _______, _______,
-
-      _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
-    ),
-
-/*
- * Function Layer: Function keys
- *
- * ,-------------------------------------------.      ,------.  ,------.      ,-------------------------------------------.
- * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |  F9  | F10  | F11  | F12  |      |      |      |  |      |      |      |      |      |      |      |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |  F5  |  F6  |  F7  |  F8  |      |      |      |  |      |      |      | Shift| Ctrl |  Alt |  GUI |        |
- * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+--------|
- * |        |  F1  |  F2  |  F3  |  F4  |      |      |      |  |      |      |      |      |      |      |      |        |
- * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        `----------------------------------'  `----------------------------------'
- *
- * ,-----------------------------.      ,------.                ,---------------------------.      ,------.
- * |        |      |      |      |      |      |                |      |      |      |      |      |      |
- * `-----------------------------'      `------'                `---------------------------'      '------'
- */
-    [_MAC_FUNCTION] = LAYOUT_myr(
-      _______, _______, _______, _______, _______, _______,          _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______,  KC_F9 ,  KC_F10,  KC_F11,  KC_F12, _______,          _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______,  KC_F5 ,  KC_F6 ,  KC_F7 ,  KC_F8 , _______,          _______, _______,          _______, KC_RSFT, KC_RCTL, KC_LALT, KC_RGUI, _______,
-      _______,  KC_F1 ,  KC_F2 ,  KC_F3 ,  KC_F4 , _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-                                 _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-
-      _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
-    ),
-
-/*
- * Nav Layer: Media, navigation
- *
- * ,-------------------------------------------.      ,------.  ,------.      ,-------------------------------------------.
- * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |      |      |      |      |      |      |      |  |      |      | PgUp | Home |   ↑  | End  | VolUp| Delete |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |  GUI |  Alt | Ctrl | Shift|      |      |      |  |      |      | PgDn |  ←   |   ↓  |   →  | VolDn| Insert |
- * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+--------|
- * |        |      |      |      |      |      |      |ScLck |  |      |      | Pause|M Prev|M Play|M Next|VolMut| PrtSc  |
- * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        `----------------------------------'  `----------------------------------'
- *
- * ,----------------------------.      ,------.                 ,----------------------------.      ,------.
- * | Prev | Next | Pause | Stop |      | Mute |                 | Prev | Next | Pause | Stop |      | Mute |
- * `----------------------------'      `------'                 `----------------------------'      '------'
- */
-    [_MAC_NAV] = LAYOUT_myr(
-      _______, _______, _______, _______, _______, _______,          _______, _______,          KC_DEL , KC_INS , KC_SCRL, KC_PSCR, _______, _______,
-      _______, _______, _______, _______, _______, _______,          _______, _______,          XX_HOME, KC_PGDN, KC_PGUP, MC_END , KC_VOLU, _______,
-      _______, _______, _______, _______, _______, _______,          _______, _______,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VOLD, _______,
-      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,KC_PAUSE, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, _______,
-                                 _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-
-      _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
-    ),
-
-/*
- * Adjust Layer: Default layer settings, RGB
- *
- * ,-------------------------------------------.      ,------.  ,------.      ,-------------------------------------------.
- * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |      |      |QWERTY|      |      |      |      |  |      |      |      |      |      |      |      |        |
- * |--------+------+------+------+------+------|      |------|  |------|      |------+------+------+------+------+--------|
- * |        |      |      |      |      |      |      |      |  |      |      | TOG  | SAI  | HUI  | VAI  | MOD  |        |
- * |--------+------+------+------+------+------+------+------|  |------|------+------+------+------+------+------+--------|
- * |        |      |      |      |      |      |      |      |  |      |      |      | SAD  | HUD  | VAD  | RMOD |        |
- * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        |      |      |      |      |      |  |      |      |      |      |      |
- *                        `----------------------------------'  `----------------------------------'
- *
- * ,-----------------------------.      ,------.                ,---------------------------.      ,------.
- * |        |      |      |      |      |      |                |      |      |      |      |      |      |
- * `-----------------------------'      `------'                `---------------------------'      '------'
- */
-    [_MAC_ADJUST] = LAYOUT_myr(
       _______, _______, _______, _______, _______, _______,         _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______, _______, _______, QWERTZ , _______, _______,         _______, _______,          _______, _______, _______, _______, _______, _______,
-      _______, _______, _______, _______, _______, _______,         _______, _______,          RGB_TOG, RGB_SAI, RGB_HUI, RGB_VAI, RGB_SPI, RGB_MOD,
+      _______, _______, _______, _______, XX_OST , _______,         _______, _______,          RGB_TOG, RGB_SAI, RGB_HUI, RGB_VAI, RGB_SPI, RGB_MOD,
       _______, _______, _______, _______, _______, _______,_______, _______, _______, _______, _______, RGB_SAD, RGB_HUD, RGB_VAD, RGB_SPD, RGB_RMOD,
                                  _______, _______, _______,_______, _______, _______, _______, _______, _______, _______,
 
       _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
 
     ),
-
 
 // /*
 //  * Layer template - LAYOUT
@@ -629,37 +426,39 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 bool oled_task_user(void) {
     oled_write_P(PSTR("Elora rev1 \n Prakti's Layout\n\n"), false);
 
-    switch (get_highest_layer(default_layer_state)) {
-        case _QWERTZ:
+    switch (detected_os) {
+        case OS_UNSURE:
+            oled_write_P(PSTR("Unsure\n"), false);
+            break;
+        case OS_LINUX:
             oled_write_P(PSTR("Linux\n"), false);
             break;
-        case _MAC_QWERTZ:
-            oled_write_P(PSTR("Mac\n"), false);
+        case OS_WINDOWS:
+            oled_write_P(PSTR("Windows\n"), false);
             break;
-        default:
-            oled_write_P(PSTR("OS:?\n"), false);
+        case OS_MACOS:
+            oled_write_P(PSTR("MacOS\n"), false);
+            break;
+        case OS_IOS:
+            oled_write_P(PSTR("IOS\n"), false);
+            break;
     }
 
     // Overlay Layer
     switch (get_highest_layer(layer_state)) {
         case _QWERTZ:
-        case _MAC_QWERTZ:
             oled_write_P(PSTR("BASE\n"), false);
             break;
         case _SYM:
-        case _MAC_SYM:
             oled_write_P(PSTR("SYMBOLS\n"), false);
             break;
         case _FUNCTION:
-        case _MAC_FUNCTION:
             oled_write_P(PSTR("FUNCTIONS\n"), false);
             break;
         case _NAV:
-        case _MAC_NAV:
             oled_write_P(PSTR("NAVIGATION\n"), false);
             break;
         case _ADJUST:
-        case _MAC_ADJUST:
             oled_write_P(PSTR("SETTINGS\n"), false);
             break;
         default:
