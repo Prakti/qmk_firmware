@@ -17,6 +17,79 @@
 #include QMK_KEYBOARD_H
 #include "keymap_german.h"
 
+// LAYER Configuration
+
+enum layers {
+    _QWERTZ = 0,
+    _SYM,
+    _FUNCTION,
+    _NAV,
+    _ADJUST,
+    // Second stack of layers for the MAC layout
+    _MAC_QWERTZ,
+    _MAC_SYM,
+    _MAC_FUNCTION,
+    _MAC_NAV,
+    _MAC_ADJUST,
+};
+
+// Aliases for readability
+#define QWERTZ   DF(_QWERTZ)
+#define SYM      MO(_SYM)
+#define NAV      MO(_NAV)
+#define FKEYS    MO(_FUNCTION)
+#define ADJUST   MO(_ADJUST)
+// Aliases for Mac layers
+#define MCQWER   DF(_MAC_QWERTZ)
+#define MCSYM    MO(_MAC_SYM)
+#define MCNAV    MO(_MAC_NAV)
+#define MCFKEY   MO(_MAC_FUNCTION)
+#define MCADJU   MO(_MAC_ADJUST)
+
+#define CTL_ESC  MT(MOD_LCTL, KC_ESC)
+#define CTL_ADIA MT(MOD_RCTL, DE_ADIA)
+#define RALT_0   MT(MOD_RALT, KC_0)
+#define S_SZ     TD(TD_S_SZ)
+#define LSFT_CAP TD(TD_LSHIFT_CAPS)
+#define RSFT_CAP TD(TD_RSHIFT_CAPS)
+
+// MAC Keyboard special cases
+#define MC_HOME   LGUI(KC_LEFT)
+#define MC_END    LGUI(KC_RIGHT)
+#define MC_LCBR   RALT(KC_8)
+#define MC_RCBR   RALT(KC_9)
+#define MC_LBRC   RALT(KC_5)
+#define MC_RBRC   RALT(KC_6)
+#define MC_BSLS   RALT(S(KC_7))
+#define MC_AT     RALT(KC_L)
+#define MC_TILD   RALT(KC_N)
+#define MC_PIPE   RALT(KC_7)
+#define MC_LABK   DE_CIRC
+#define MC_RABK   DE_DEG
+#define MC_CIRC   DE_LABK
+#define MC_DEG    DE_RABK
+
+
+// OS Detection on USB Init
+
+os_variant_t detected_os = OS_UNSURE;
+
+bool process_detected_host_os_user(os_variant_t os_variant) {
+    detected_os = os_variant;
+
+    switch (detected_os) {
+        case OS_MACOS:
+        case OS_IOS:
+            default_layer_set(1 << _MAC_QWERTZ);
+            break;
+        default:
+            break; // Do nothing for all the other OS
+    }
+
+    return true;
+}
+
+
 // TAP DANCE Configuration
 
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
@@ -65,57 +138,118 @@ const key_override_t **key_overrides = (const key_override_t *[]){
 	NULL // Null terminate the array of overrides!
 };
 
-// LAYER Configuration
+// Custom Keycodes
 
-enum layers {
-    _QWERTZ = 0,
-    _SYM,
-    _FUNCTION,
-    _NAV,
-    _ADJUST,
-    // Second stack of layers for the MAC layout
-    _MAC_QWERTZ,
-    _MAC_SYM,
-    _MAC_FUNCTION,
-    _MAC_NAV,
-    _MAC_ADJUST,
+enum custom_keycodes {
+    XX_HOME = SAFE_RANGE,
+    XX_END,
+    XX_LCBR,
+    XX_RCBR,
+    XX_LBRC,
+    XX_RBRC,
+    XX_BSLS,
+    XX_AT,
+    XX_TILD,
+    XX_PIPE,
+    XX_LABK,
+    XX_RABK,
+    XX_CIRC,
+    XX_DEG,
 };
 
-// Aliases for readability
-#define QWERTZ   DF(_QWERTZ)
-#define SYM      MO(_SYM)
-#define NAV      MO(_NAV)
-#define FKEYS    MO(_FUNCTION)
-#define ADJUST   MO(_ADJUST)
-// Aliases for Mac layers
-#define MCQWER   DF(_MAC_QWERTZ)
-#define MCSYM    MO(_MAC_SYM)
-#define MCNAV    MO(_MAC_NAV)
-#define MCFKEY   MO(_MAC_FUNCTION)
-#define MCADJU   MO(_MAC_ADJUST)
+bool xx_handle_code(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        register_code16(keycode);
+    } else {
+        unregister_code16(keycode);
+    }
+    return true;
+}
 
-#define CTL_ESC  MT(MOD_LCTL, KC_ESC)
-#define CTL_ADIA MT(MOD_RCTL, DE_ADIA)
-#define RALT_0   MT(MOD_LALT, KC_0)
-#define S_SZ     TD(TD_S_SZ)
-#define LSFT_CAP TD(TD_LSHIFT_CAPS)
-#define RSFT_CAP TD(TD_RSHIFT_CAPS)
+bool xx_process_mac_code(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case XX_HOME:
+            return xx_handle_code(LGUI(KC_LEFT), record);
+        case XX_END:
+            return xx_handle_code(LGUI(KC_RIGHT), record);
+        case XX_LCBR:
+            return xx_handle_code(RALT(KC_8), record);
+        case XX_RCBR:
+            return xx_handle_code(RALT(KC_9), record);
+        case XX_LBRC:
+            return xx_handle_code(RALT(KC_5), record);
+        case XX_RBRC:
+            return xx_handle_code(RALT(KC_6), record);
+        case XX_BSLS:
+            return xx_handle_code(RALT(S(KC_7)), record);
+        case XX_AT:
+            return xx_handle_code(RALT(KC_L), record);
+        case XX_TILD:
+            return xx_handle_code(RALT(KC_N), record);
+        case XX_PIPE:
+            return xx_handle_code(RALT(KC_7), record);
+        case XX_LABK:
+            return xx_handle_code(DE_CIRC, record);
+        case XX_RABK:
+            return xx_handle_code(DE_DEG, record);
+        case XX_CIRC:
+            return xx_handle_code(DE_LABK, record);
+        case XX_DEG:
+            return xx_handle_code(DE_RABK, record);
+        default:
+            return false;
+    }
+}
 
-// MAC Keyboard special cases
-#define MC_HOME   LGUI(KC_LEFT)
-#define MC_END    LGUI(KC_RIGHT)
-#define MC_LCBR   RALT(KC_8)
-#define MC_RCBR   RALT(KC_9)
-#define MC_LBRC   RALT(KC_5)
-#define MC_RBRC   RALT(KC_6)
-#define MC_BSLS   RALT(S(KC_7))
-#define MC_AT     RALT(KC_L)
-#define MC_TILD   RALT(KC_N)
-#define MC_PIPE   RALT(KC_7)
-#define MC_LABK   DE_CIRC
-#define MC_RABK   DE_DEG
-#define MC_CIRC   DE_LABK
-#define MC_DEG    DE_RABK
+bool xx_process_other_code(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case XX_HOME:
+            return xx_handle_code(KC_HOME, record);
+        case XX_END:
+            return xx_handle_code(KC_END, record);
+        case XX_LCBR:
+            return xx_handle_code(DE_LCBR, record);
+        case XX_RCBR:
+            return xx_handle_code(DE_RCBR, record);
+        case XX_LBRC:
+            return xx_handle_code(DE_LBRC, record);
+        case XX_RBRC:
+            return xx_handle_code(DE_RBRC, record);
+        case XX_BSLS:
+            return xx_handle_code(DE_BSLS, record);
+        case XX_AT:
+            return xx_handle_code(DE_AT, record);
+        case XX_TILD:
+            return xx_handle_code(DE_TILD, record);
+        case XX_PIPE:
+            return xx_handle_code(DE_PIPE, record);
+        case XX_LABK:
+            return xx_handle_code(DE_LABK, record);
+        case XX_RABK:
+            return xx_handle_code(DE_RABK, record);
+        case XX_CIRC:
+            return xx_handle_code(DE_CIRC, record);
+        case XX_DEG:
+            return xx_handle_code(DE_DEG, record);
+        default:
+            return false;
+    }
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode >= XX_HOME && keycode <= XX_DEG) {
+        switch (detected_os) {
+            case OS_MACOS:
+            case OS_IOS:
+                return xx_process_mac_code(keycode, record);
+            default:
+                return xx_process_other_code(keycode, record);
+        }
+    }
+    return true;
+}
+
+
 
 
 
@@ -177,8 +311,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_SYM] = LAYOUT_myr(
       _______, DE_CIRC,  DE_DEG, DE_TILD, DE_COMM,  DE_DOT,          _______, _______,          DE_DLR , DE_EURO, DE_PERC, DE_ACUT, DE_GRV , _______,
       DE_DQUO, DE_PIPE,  DE_AT , DE_LCBR, DE_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
-      DE_QUOT, DE_BSLS, DE_RABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
-      _______, DE_SECT, DE_LABK, DE_LBRC, DE_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
+      DE_QUOT, DE_BSLS, DE_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
+      _______, DE_SECT, DE_RABK, DE_LBRC, DE_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
                                  _______, _______, _______, _______, _______, _______, _______, RALT_0 , _______, _______,
 
       _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
@@ -236,7 +370,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
     [_NAV] = LAYOUT_myr(
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_DEL , KC_INS , KC_SCRL, KC_PSCR, _______, _______,
-      _______, _______, _______, _______, _______, _______,          _______, _______,          KC_HOME, KC_PGDN, KC_PGUP,  KC_END, KC_VOLU, _______,
+      _______, _______, _______, _______, _______, _______,          _______, _______,          XX_HOME, KC_PGDN, KC_PGUP,  KC_END, KC_VOLU, _______,
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VOLD, _______,
       _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,KC_PAUSE, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, _______,
                                  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
@@ -329,8 +463,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_MAC_SYM] = LAYOUT_myr(
       _______, MC_CIRC,  MC_DEG, MC_TILD, DE_COMM,  DE_DOT,          _______, _______,          DE_DLR , DE_EURO, DE_PERC, DE_ACUT, DE_GRV , _______,
       DE_DQUO, MC_PIPE,  MC_AT , MC_LCBR, MC_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
-      DE_QUOT, MC_BSLS, MC_RABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
-      _______, DE_SECT, MC_LABK, MC_LBRC, MC_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_2  , DE_UNDS, _______,
+      DE_QUOT, MC_BSLS, MC_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
+      _______, DE_SECT, MC_RABK, MC_LBRC, MC_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
                                  _______, _______, _______, _______, _______, _______, _______, RALT_0 , _______, _______,
 
       _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
@@ -388,7 +522,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
     [_MAC_NAV] = LAYOUT_myr(
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_DEL , KC_INS , KC_SCRL, KC_PSCR, _______, _______,
-      _______, _______, _______, _______, _______, _______,          _______, _______,          MC_HOME, KC_PGDN, KC_PGUP, MC_END , KC_VOLU, _______,
+      _______, _______, _______, _______, _______, _______,          _______, _______,          XX_HOME, KC_PGDN, KC_PGUP, MC_END , KC_VOLU, _______,
       _______, _______, _______, _______, _______, _______,          _______, _______,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VOLD, _______,
       _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,KC_PAUSE, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, _______,
                                  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
@@ -484,10 +618,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 
+
 /* The default OLED and rotary encoder code can be found at the bottom of qmk_firmware/keyboards/splitkb/elora/rev1/rev1.c
  * These default settings can be overriden by your own settings in your keymap.c
  * DO NOT edit the rev1.c file; instead override the weakly defined default functions by your own.
  */
+
 
 #ifdef OLED_ENABLE
 bool oled_task_user(void) {

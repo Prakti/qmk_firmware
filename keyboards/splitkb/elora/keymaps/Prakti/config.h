@@ -31,3 +31,6 @@
 // Tap Dance Options
 #define TAPPING_TERM 175
 #define TAPPING_TERM_PER_KEY
+
+// OS Detection Options
+#define OS_DETECTION_KEYBOARD_RESET

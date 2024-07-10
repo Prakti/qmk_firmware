@@ -40,3 +40,6 @@ TAP_DANCE_ENABLE = yes
 
 # Enable Key Overrides
 KEY_OVERRIDE_ENABLE = yes
+
+# Enable OS detection
+OS_DETECTION_ENABLE = yes
