@@ -34,3 +34,6 @@
 
 // OS Detection Options
 #define OS_DETECTION_KEYBOARD_RESET
+
+// Custom OLED Font
+#define OLED_FONT_H "glcdfont.h"

@@ -168,6 +168,8 @@ const uint16_t PROGMEM other_keycodes[] = {
     XX_MAPPING(XX_DEG, DE_DEG),
 };
 
+bool lshift = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (keycode >= XX_HOME && keycode <= XX_DEG) {
         uint16_t translated_keycode;
@@ -198,6 +200,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
         return false;
     }
+
     return true;
 }
 
@@ -421,69 +424,292 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * DO NOT edit the rev1.c file; instead override the weakly defined default functions by your own.
  */
 
+// clang-format off
+static const char PROGMEM linux_logo[][3] = {
+    {0x9C,0x9D, 0x00},
+    {0xBC,0xBD, 0x00},
+};
+
+static const char PROGMEM apple_logo[][3] = {
+    {0x98,0x99,0x00},
+    {0xB8,0xB9,0x00},
+};
+
+static const char PROGMEM windows_logo[][3] = {
+    {0x9A,0x9B,0x00},
+    {0xBA,0xBB,0x00},
+};
+
+static const char PROGMEM layer_glyph[][3] = {
+    {0x96,0x97,0x00},
+    {0xB6,0xB7,0x00},
+};
+
+static const char PROGMEM scrl_glyph[][3] = {
+    {0x8E,0x8F,0x00},
+    {0xAE,0xAF,0x00},
+};
+
+static const char PROGMEM num_glyph[][3] = {
+    {0x90,0x91,0x00},
+    {0xB0,0xB1,0x00},
+};
+
+static const char PROGMEM caps_glyph[][3] = {
+    {0x8C,0x8D,0x00},
+    {0xAC,0xAD,0x00},
+};
+
+static const char PROGMEM gui_glyph[][3] = {
+    {0x8A,0x8B,0x00},
+    {0xAA,0xAB,0x00},
+};
+
+static const char PROGMEM ctrl_glyph[][3] = {
+    {0x84,0x85,0x00},
+    {0xA4,0xA5,0x00},
+};
+
+static const char PROGMEM alt_glyph[][3] = {
+    {0x86,0x87,0x00},
+    {0xA6,0xA7,0x00},
+};
+
+static const char PROGMEM sft_glyph[][3] = {
+    {0x88,0x89,0x00},
+    {0xA8,0xA9,0x00},
+};
+
+static const char PROGMEM qmk_logo[][5] = {
+    {0x80,0x81,0x82,0x83,0x00},
+    {0xA0,0xA1,0xA2,0xA3,0x00},
+    {0xC0,0xC1,0xc2,0xC3,0x00},
+};
+// clang-format on
+
+static const char PROGMEM title[] = PSTR("Elora rev1 \nPrakti's\nLayout\n\n");
 
 #ifdef OLED_ENABLE
 bool oled_task_user(void) {
-    oled_write_P(PSTR("Elora rev1 \n Prakti's Layout\n\n"), false);
+    oled_write_P(title, false);
 
-    switch (detected_os) {
-        case OS_UNSURE:
-            oled_write_P(PSTR("Unsure\n"), false);
-            break;
-        case OS_LINUX:
-            oled_write_P(PSTR("Linux\n"), false);
-            break;
-        case OS_WINDOWS:
-            oled_write_P(PSTR("Windows\n"), false);
-            break;
-        case OS_MACOS:
-            oled_write_P(PSTR("MacOS\n"), false);
-            break;
-        case OS_IOS:
-            oled_write_P(PSTR("IOS\n"), false);
-            break;
+    uint8_t mods = get_mods();
+    if (is_keyboard_left()) {
+        if (mods & MOD_BIT(KC_LGUI)) {
+          oled_set_cursor(1,5);
+          oled_write_P(gui_glyph[0], false);
+          oled_set_cursor(1,6);
+          oled_write_P(gui_glyph[1], false);
+        } else {
+          oled_set_cursor(1,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(1,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_LCTL)) {
+          oled_set_cursor(3,5);
+          oled_write_P(ctrl_glyph[0], false);
+          oled_set_cursor(3,6);
+          oled_write_P(ctrl_glyph[1], false);
+        } else {
+          oled_set_cursor(3,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(3,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_LALT)) {
+          oled_set_cursor(5,5);
+          oled_write_P(alt_glyph[0], false);
+          oled_set_cursor(5,6);
+          oled_write_P(alt_glyph[1], false);
+        } else {
+          oled_set_cursor(5,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(5,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_LSFT)) {
+          oled_set_cursor(7,5);
+          oled_write_P(sft_glyph[0], false);
+          oled_set_cursor(7,6);
+          oled_write_P(sft_glyph[1], false);
+        } else {
+          oled_set_cursor(7,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(7,6);
+          oled_write_P(PSTR("  "), false);
+        }
+    } else {
+        if (mods & MOD_BIT(KC_RGUI)) {
+          oled_set_cursor(1,5);
+          oled_write_P(gui_glyph[0], false);
+          oled_set_cursor(1,6);
+          oled_write_P(gui_glyph[1], false);
+        } else {
+          oled_set_cursor(1,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(1,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_RCTL)) {
+          oled_set_cursor(3,5);
+          oled_write_P(ctrl_glyph[0], false);
+          oled_set_cursor(3,6);
+          oled_write_P(ctrl_glyph[1], false);
+        } else {
+          oled_set_cursor(3,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(3,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_RALT)) {
+          oled_set_cursor(5,5);
+          oled_write_P(alt_glyph[0], false);
+          oled_set_cursor(5,6);
+          oled_write_P(alt_glyph[1], false);
+        } else {
+          oled_set_cursor(5,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(5,6);
+          oled_write_P(PSTR("  "), false);
+        }
+        if (mods & MOD_BIT(KC_RSFT)) {
+          oled_set_cursor(7,5);
+          oled_write_P(sft_glyph[0], false);
+          oled_set_cursor(7,6);
+          oled_write_P(sft_glyph[1], false);
+        } else {
+          oled_set_cursor(7,5);
+          oled_write_P(PSTR("  "), false);
+          oled_set_cursor(7,6);
+          oled_write_P(PSTR("  "), false);
+        }
     }
 
-    // Overlay Layer
-    switch (get_highest_layer(layer_state)) {
-        case _QWERTZ:
-            oled_write_P(PSTR("BASE\n"), false);
-            break;
-        case _SYM:
-            oled_write_P(PSTR("SYMBOLS\n"), false);
-            break;
-        case _FUNCTION:
-            oled_write_P(PSTR("FUNCTIONS\n"), false);
-            break;
-        case _NAV:
-            oled_write_P(PSTR("NAVIGATION\n"), false);
-            break;
-        case _ADJUST:
-            oled_write_P(PSTR("SETTINGS\n"), false);
-            break;
-        default:
-            // Or use the write_ln shortcut over adding '\n' to the end of your string
-            oled_write_ln_P(PSTR("Layer?"), false);
-    }
 
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
-    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
-    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
-    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
+    if (led_state.num_lock) {
+      oled_set_cursor(1,7);
+      oled_write_P(num_glyph[0], false);
+      oled_set_cursor(1,8);
+      oled_write_P(num_glyph[1], false);
+    } else {
+      oled_set_cursor(1,7);
+      oled_write_P(PSTR("  "), false);
+      oled_set_cursor(1,8);
+      oled_write_P(PSTR("  "), false);
+    }
 
-    // QMK Logo
-    // clang-format off
-    static const char PROGMEM qmk_logo[] = {
-        0x81,0x82,0x83,0x84,0x0a,
-        0xa1,0xa2,0xa3,0xa4,0x85,0x86,0x87,0x88,0x89,0x0a,
-        0xc1,0xc2,0xc3,0xc4,0xa5,0xa6,0xa7,0xa8,0xa9,0x0a,
-        0x8a,0x8b,0x8c,0x8d,0xc5,0xc6,0xc7,0xc8,0xc9,0x0a,
-        0xaa,0xab,0xac,0xad,0xae,0xaf,0xb0,0xb1,0xb2,0xb3,0x00
-    };
-    // clang-format on
-    oled_set_cursor(0, oled_max_lines()-5);
-    oled_write_P(qmk_logo, false);
+    if (led_state.caps_lock) {
+      oled_set_cursor(3,7);
+      oled_write_P(caps_glyph[0], false);
+      oled_set_cursor(3,8);
+      oled_write_P(caps_glyph[1], false);
+    } else {
+      oled_set_cursor(3,7);
+      oled_write_P(PSTR("  "), false);
+      oled_set_cursor(3,8);
+      oled_write_P(PSTR("  "), false);
+    }
+
+    if (led_state.scroll_lock) {
+      oled_set_cursor(5,7);
+      oled_write_P(scrl_glyph[0], false);
+      oled_set_cursor(5,8);
+      oled_write_P(scrl_glyph[1], false);
+    } else {
+      oled_set_cursor(5,7);
+      oled_write_P(PSTR("  "), false);
+      oled_set_cursor(5,8);
+      oled_write_P(PSTR("  "), false);
+    }
+
+    // Overlay Layer
+    oled_set_cursor(0,10);
+    oled_write_P(layer_glyph[0], false); oled_advance_page(true);
+    switch (get_highest_layer(layer_state)) {
+        case _QWERTZ:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_P(PSTR(" BASE\n"), false);
+            break;
+        case _SYM:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_P(PSTR(" SYMBOL\n"), false);
+            break;
+        case _FUNCTION:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_P(PSTR(" FUNC\n"), false);
+            break;
+        case _NAV:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_P(PSTR(" NAVI\n"), false);
+            break;
+        case _ADJUST:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_P(PSTR(" CONF\n"), false);
+            break;
+        default:
+            oled_write_P(layer_glyph[1], false);
+            oled_write_ln_P(PSTR("???"), false);
+    }
+
+    if (is_keyboard_master()) {
+        // QMK Logo
+        oled_set_cursor(0, oled_max_lines()-3);
+        oled_write_P(qmk_logo[0], false); oled_advance_page(false);
+        oled_write_P(qmk_logo[1], false); oled_advance_page(false);
+        oled_write_P(qmk_logo[2], false);
+
+        switch (detected_os) {
+            case OS_UNSURE:
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-2);
+                oled_write_P(PSTR("??"), false);
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-1);
+                oled_write_P(PSTR("??"), false);
+                break;
+            case OS_LINUX:
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-2);
+                oled_write_P(linux_logo[0], false);
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-1);
+                oled_write_P(linux_logo[1], false);
+                break;
+            case OS_WINDOWS:
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-2);
+                oled_write_P(windows_logo[0], false); oled_advance_page(true);
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-1);
+                oled_write_P(windows_logo[1], false); oled_advance_page(true);
+                break;
+            case OS_MACOS:
+            case OS_IOS:
+                oled_set_cursor(oled_max_chars()-2, oled_max_lines()-2);
+                oled_write_P(apple_logo[0], false); oled_advance_page(true);
+                oled_set_cursor(oled_max_chars()-2, oled_max_lines()-1);
+                oled_write_P(apple_logo[1], false); oled_advance_page(true);
+                break;
+        }
+    } else {
+        static const char PROGMEM sleepy_cat[] = {
+            0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+            0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+            0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+            0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+            0,  0,  0,  0,  0,  0,  0,  0,  0,128,128, 64, 64, 64, 64, 64, 64,
+            64, 64, 64, 64, 64, 64, 64,128,128,128,  0,  0,  0,  0,  0,  0,224,
+            24, 68,136,144, 32, 64,192, 64,192, 64, 64,128,128, 64, 32,160,
+            16,240,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0,192, 32, 16,
+            8,  4,  2, 66,129,  1,  0,  0,  0, 16, 34,  4,  4, 32,192,  6,
+            24,224,  0,  6,216,  0,224, 24,  1,  1,  1,  1,241, 14,  1,  0,  0,
+            0, 32, 32, 32,  3,128,  7,  0, 71, 64, 64,  0,  1,240, 14,  1,  0,
+            0,  0,  0,  0,  0,  0,  0, 32, 32,248,  7,  0,  0,  0,  0,224, 32,
+            32, 32, 35, 40, 40, 40, 40, 40, 41, 41, 40, 40, 40, 40, 50, 32, 32,
+            32, 32, 32, 32, 32, 33, 34, 44, 32, 33, 34, 34, 34, 36, 36, 36, 40,
+            41, 41, 41, 40, 40, 40, 36, 42, 42, 41, 42, 50, 42, 42, 42, 42, 42,
+            44, 32, 32,
+        };
+        oled_set_cursor(0, 12);
+        oled_write_raw_P(sleepy_cat, sizeof(sleepy_cat));
+    }
 
     return false;
 }
@@ -493,6 +719,5 @@ bool oled_task_user(void) {
 #ifdef ENCODER_ENABLE
 bool encoder_update_user(uint8_t index, bool clockwise) {
   // Your code goes here
-}
-#endif
+} #endif
 DELETE THIS LINE TO UNCOMMENT (2/2) */
