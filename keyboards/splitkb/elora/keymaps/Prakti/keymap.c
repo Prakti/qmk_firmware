@@ -17,36 +17,6 @@
 #include QMK_KEYBOARD_H
 #include "keymap_german.h"
 
-// LAYER Configuration
-
-enum layers {
-    _QWERTZ = 0,
-    _SYM,
-    _FUNCTION,
-    _NAV,
-    _ADJUST,
-};
-
-// Aliases for readability
-#define QWERTZ   DF(_QWERTZ)
-#define SYM      MO(_SYM)
-#define NAV      MO(_NAV)
-#define FKEYS    MO(_FUNCTION)
-#define ADJUST   MO(_ADJUST)
-// Aliases for Mac layers
-#define MCQWER   DF(_MAC_QWERTZ)
-#define MCSYM    MO(_MAC_SYM)
-#define MCNAV    MO(_MAC_NAV)
-#define MCFKEY   MO(_MAC_FUNCTION)
-#define MCADJU   MO(_MAC_ADJUST)
-
-#define CTL_ESC  MT(MOD_LCTL, KC_ESC)
-#define CTL_ADIA MT(MOD_RCTL, DE_ADIA)
-#define RALT_0   MT(MOD_RALT, KC_0)
-#define S_SZ     TD(TD_S_SZ)
-#define LSFT_CAP TD(TD_LSHIFT_CAPS)
-#define RSFT_CAP TD(TD_RSHIFT_CAPS)
-
 
 // OS Detection on USB Init
 os_variant_t detected_os = OS_UNSURE;
@@ -148,7 +118,7 @@ const uint16_t PROGMEM mac_keycodes[] = {
     XX_MAPPING(XX_LABK, DE_CIRC),
     XX_MAPPING(XX_RABK, DE_DEG),
     XX_MAPPING(XX_CIRC, DE_LABK),
-    XX_MAPPING(XX_DEG, DE_RABK)
+    XX_MAPPING(XX_DEG, DE_RABK),
 };
 
 const uint16_t PROGMEM other_keycodes[] = {
@@ -204,8 +174,28 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+// LAYER Configuration
 
-// Keymap Layer definition
+enum layers {
+    _QWERTZ = 0,
+    _SYM,
+    _FUNCTION,
+    _NAV,
+    _ADJUST,
+};
+
+// Aliases for readability
+#define QWERTZ   DF(_QWERTZ)
+#define SYM      MO(_SYM)
+#define NAV      MO(_NAV)
+#define FKEYS    MO(_FUNCTION)
+#define ADJUST   MO(_ADJUST)
+
+#define CTL_ESC  MT(MOD_LCTL, KC_ESC)
+#define CTL_ADIA MT(MOD_RCTL, DE_ADIA)
+#define S_SZ     TD(TD_S_SZ)
+#define LSFT_CAP TD(TD_LSHIFT_CAPS)
+#define RSFT_CAP TD(TD_RSHIFT_CAPS)
 
 
 // clang-format off
@@ -266,7 +256,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       DE_DQUO, XX_PIPE,  XX_AT , XX_LCBR, XX_RCBR, DE_HASH,          _______, _______,          DE_PLUS, KC_7   , KC_8   ,  KC_9  , DE_SLSH, DE_ASTR,
       DE_QUOT, XX_BSLS, XX_LABK, DE_LPRN, DE_RPRN, DE_COLN,          _______, _______,          DE_MINS, KC_4   , KC_5   ,  KC_6  , KC_0   , DE_AMPR,
       _______, DE_SECT, XX_RABK, XX_LBRC, XX_RBRC, DE_SCLN, _______, _______, _______, _______, DE_EQL , KC_1   , KC_2   ,  KC_3  , DE_UNDS, _______,
-                                 _______, _______, _______, _______, _______, _______, _______, RALT_0 , _______, _______,
+                                 _______, _______, _______, _______, _______, _______, _______, KC_RALT , _______, _______,
 
       _______, _______, _______, _______,          _______,                   _______, _______, _______, _______,          _______
     ),
@@ -490,102 +480,51 @@ static const char PROGMEM qmk_logo[][5] = {
 static const char PROGMEM title[] = PSTR("Elora rev1 \nPrakti's\nLayout\n\n");
 
 #ifdef OLED_ENABLE
+
+void modkey_symbol(uint8_t mod, uint8_t key, const char glyph[][3], uint8_t x, uint8_t y) {
+    if (mod & MOD_BIT(key)) {
+        oled_set_cursor(x, y);
+        oled_write_P(glyph[0], false);
+        oled_set_cursor(x, y+1);
+        oled_write_P(glyph[1], false);
+    } else {
+        oled_set_cursor(x, y);
+        oled_write_P(PSTR("  "), false);
+        oled_set_cursor(x, y+1);
+        oled_write_P(PSTR("  "), false);
+    }
+}
+
+void lock_key_symbol(bool led_on, const char glyph[][2], uint8_t x, uint8_t y) {
+    if (led_on) {
+        oled_set_cursor(x, y);
+        oled_write_P(glyph[0], false);
+        oled_set_cursor(x, y+1);
+        oled_write_P(glyph[1], false);
+    } else {
+        oled_set_cursor(x, y);
+        oled_write_P(PSTR("  "), false);
+        oled_set_cursor(x, y+1);
+        oled_write_P(PSTR("  "), false);
+    }
+}
+
 bool oled_task_user(void) {
     oled_write_P(title, false);
 
     uint8_t mods = get_mods();
-    if (is_keyboard_left()) {
-        if (mods & MOD_BIT(KC_LGUI)) {
-          oled_set_cursor(1,5);
-          oled_write_P(gui_glyph[0], false);
-          oled_set_cursor(1,6);
-          oled_write_P(gui_glyph[1], false);
-        } else {
-          oled_set_cursor(1,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(1,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_LCTL)) {
-          oled_set_cursor(3,5);
-          oled_write_P(ctrl_glyph[0], false);
-          oled_set_cursor(3,6);
-          oled_write_P(ctrl_glyph[1], false);
-        } else {
-          oled_set_cursor(3,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(3,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_LALT)) {
-          oled_set_cursor(5,5);
-          oled_write_P(alt_glyph[0], false);
-          oled_set_cursor(5,6);
-          oled_write_P(alt_glyph[1], false);
-        } else {
-          oled_set_cursor(5,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(5,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_LSFT)) {
-          oled_set_cursor(7,5);
-          oled_write_P(sft_glyph[0], false);
-          oled_set_cursor(7,6);
-          oled_write_P(sft_glyph[1], false);
-        } else {
-          oled_set_cursor(7,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(7,6);
-          oled_write_P(PSTR("  "), false);
-        }
-    } else {
-        if (mods & MOD_BIT(KC_RGUI)) {
-          oled_set_cursor(1,5);
-          oled_write_P(gui_glyph[0], false);
-          oled_set_cursor(1,6);
-          oled_write_P(gui_glyph[1], false);
-        } else {
-          oled_set_cursor(1,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(1,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_RCTL)) {
-          oled_set_cursor(3,5);
-          oled_write_P(ctrl_glyph[0], false);
-          oled_set_cursor(3,6);
-          oled_write_P(ctrl_glyph[1], false);
-        } else {
-          oled_set_cursor(3,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(3,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_RALT)) {
-          oled_set_cursor(5,5);
-          oled_write_P(alt_glyph[0], false);
-          oled_set_cursor(5,6);
-          oled_write_P(alt_glyph[1], false);
-        } else {
-          oled_set_cursor(5,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(5,6);
-          oled_write_P(PSTR("  "), false);
-        }
-        if (mods & MOD_BIT(KC_RSFT)) {
-          oled_set_cursor(7,5);
-          oled_write_P(sft_glyph[0], false);
-          oled_set_cursor(7,6);
-          oled_write_P(sft_glyph[1], false);
-        } else {
-          oled_set_cursor(7,5);
-          oled_write_P(PSTR("  "), false);
-          oled_set_cursor(7,6);
-          oled_write_P(PSTR("  "), false);
-        }
-    }
 
+    if (is_keyboard_left()) {
+        modkey_symbol(mods, KC_LGUI, gui_glyph, 1, 5);
+        modkey_symbol(mods, KC_LCTL, ctrl_glyph, 3, 5);
+        modkey_symbol(mods, KC_LALT, alt_glyph, 5, 5);
+        modkey_symbol(mods, KC_LSFT, sft_glyph, 7, 5);
+    } else {
+        modkey_symbol(mods, KC_RGUI, gui_glyph, 1, 5);
+        modkey_symbol(mods, KC_RCTL, ctrl_glyph, 3, 5);
+        modkey_symbol(mods, KC_RALT, alt_glyph, 5, 5);
+        modkey_symbol(mods, KC_RSFT, sft_glyph, 7, 5);
+    }
 
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
