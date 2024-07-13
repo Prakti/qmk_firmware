@@ -495,7 +495,7 @@ void modkey_symbol(uint8_t mod, uint8_t key, const char glyph[][3], uint8_t x, u
     }
 }
 
-void lock_key_symbol(bool led_on, const char glyph[][2], uint8_t x, uint8_t y) {
+void lock_key_symbol(bool led_on, const char glyph[][3], uint8_t x, uint8_t y) {
     if (led_on) {
         oled_set_cursor(x, y);
         oled_write_P(glyph[0], false);
@@ -528,41 +528,10 @@ bool oled_task_user(void) {
 
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
-    if (led_state.num_lock) {
-      oled_set_cursor(1,7);
-      oled_write_P(num_glyph[0], false);
-      oled_set_cursor(1,8);
-      oled_write_P(num_glyph[1], false);
-    } else {
-      oled_set_cursor(1,7);
-      oled_write_P(PSTR("  "), false);
-      oled_set_cursor(1,8);
-      oled_write_P(PSTR("  "), false);
-    }
 
-    if (led_state.caps_lock) {
-      oled_set_cursor(3,7);
-      oled_write_P(caps_glyph[0], false);
-      oled_set_cursor(3,8);
-      oled_write_P(caps_glyph[1], false);
-    } else {
-      oled_set_cursor(3,7);
-      oled_write_P(PSTR("  "), false);
-      oled_set_cursor(3,8);
-      oled_write_P(PSTR("  "), false);
-    }
-
-    if (led_state.scroll_lock) {
-      oled_set_cursor(5,7);
-      oled_write_P(scrl_glyph[0], false);
-      oled_set_cursor(5,8);
-      oled_write_P(scrl_glyph[1], false);
-    } else {
-      oled_set_cursor(5,7);
-      oled_write_P(PSTR("  "), false);
-      oled_set_cursor(5,8);
-      oled_write_P(PSTR("  "), false);
-    }
+    lock_key_symbol(led_state.num_lock, num_glyph, 1, 7);
+    lock_key_symbol(led_state.caps_lock, caps_glyph, 3, 7);
+    lock_key_symbol(led_state.scroll_lock, scrl_glyph, 5, 7);
 
     // Overlay Layer
     oled_set_cursor(0,10);
