@@ -94,6 +94,8 @@ enum custom_keycodes {
     XX_RABK,
     XX_CIRC,
     XX_DEG,
+    CTL_ADIA,
+    CTL_ESC,
     XX_OST, // custom keycode to toggle the OS manually
 };
 
@@ -138,27 +140,118 @@ const uint16_t PROGMEM other_keycodes[] = {
     XX_MAPPING(XX_DEG, DE_DEG),
 };
 
-bool lshift = false;
+bool rctl_active = false;
+uint16_t rctl_timer;
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode >= XX_HOME && keycode <= XX_DEG) {
-        uint16_t translated_keycode;
+bool process_ctl_adia(keyrecord_t *record) {
+    if (record->event.pressed) {
+        rctl_timer = timer_read();
+        rctl_active = true;
+    } else {
+        rctl_active = false;
+        if (timer_elapsed(rctl_timer) < TAPPING_TERM) {
+            tap_code16(DE_ADIA);
+        } else {
+             // Only handle key release here
+            switch (detected_os) {
+                case OS_MACOS:
+                case OS_IOS:
+                    unregister_code16(KC_RGUI);
+                    break;
+                default:
+                    unregister_code16(KC_RCTL);
+            }
+        }
+    }
+    return false;
+}
+
+void check_ctl_adia_timer(void) {
+    // Needs to be called on matrix scan
+    if (rctl_active && timer_elapsed(rctl_timer) >= TAPPING_TERM) {
+        // Detect a hold on the RCTL_ADIA keybinding
+        rctl_active = false;
         switch (detected_os) {
             case OS_MACOS:
             case OS_IOS:
-                translated_keycode = XX_LOOKUP(mac_keycodes, keycode);
+                register_code16(KC_RGUI);
                 break;
             default:
-                translated_keycode = XX_LOOKUP(other_keycodes, keycode);
-                break;
+                register_code16(KC_RCTL);
         }
+    }
+}
 
-        if (record->event.pressed) {
-            register_code16(translated_keycode);
+bool lctl_active = false;
+uint16_t lctl_timer;
+
+bool process_ctl_esc(keyrecord_t *record) {
+    if (record->event.pressed) {
+        lctl_timer = timer_read();
+        lctl_active = true;
+    } else {
+        lctl_active = false;
+        if (timer_elapsed(lctl_timer) < TAPPING_TERM) {
+            tap_code16(KC_ESC);
         } else {
-            unregister_code16(translated_keycode);
+             // Only handle key release here
+            switch (detected_os) {
+                case OS_MACOS:
+                case OS_IOS:
+                    unregister_code16(KC_LGUI);
+                    break;
+                default:
+                    unregister_code16(KC_LCTL);
+            }
         }
-        return false;
+    }
+    return false;
+}
+
+void check_ctl_esc_timer(void) {
+    // Needs to be called on matrix scan
+    if (lctl_active && timer_elapsed(lctl_timer) >= TAPPING_TERM) {
+        // Detect a hold on the RCTL_ADIA keybinding
+        lctl_active = false;
+        switch (detected_os) {
+            case OS_MACOS:
+            case OS_IOS:
+                register_code16(KC_LGUI);
+                break;
+            default:
+                register_code16(KC_LCTL);
+        }
+    }
+}
+
+bool process_mapped_key(uint16_t keycode, keyrecord_t  *record) {
+    uint16_t translated_keycode;
+    switch (detected_os) {
+        case OS_MACOS:
+        case OS_IOS:
+            translated_keycode = XX_LOOKUP(mac_keycodes, keycode);
+            break;
+        default:
+            translated_keycode = XX_LOOKUP(other_keycodes, keycode);
+            break;
+    }
+
+    if (record->event.pressed) {
+        register_code16(translated_keycode);
+    } else {
+        unregister_code16(translated_keycode);
+    }
+
+    return false;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode >= XX_HOME && keycode <= XX_DEG) {
+        return process_mapped_key(keycode, record);
+    } else if (keycode == CTL_ADIA) {
+        return process_ctl_adia(record);
+    } else if (keycode == CTL_ESC) {
+        return process_ctl_esc(record);
     } else if (keycode == XX_OST && record->event.pressed) {
         switch (detected_os) {
             case OS_MACOS:
@@ -172,6 +265,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 
     return true;
+}
+
+void matrix_scan_user(void) {
+    check_ctl_adia_timer();
+    check_ctl_esc_timer();
 }
 
 // LAYER Configuration
@@ -191,8 +289,6 @@ enum layers {
 #define FKEYS    MO(_FUNCTION)
 #define ADJUST   MO(_ADJUST)
 
-#define CTL_ESC  MT(MOD_LCTL, KC_ESC)
-#define CTL_ADIA MT(MOD_RCTL, DE_ADIA)
 #define S_SZ     TD(TD_S_SZ)
 #define LSFT_CAP TD(TD_LSHIFT_CAPS)
 #define RSFT_CAP TD(TD_RSHIFT_CAPS)
@@ -590,9 +686,9 @@ bool oled_task_user(void) {
                 break;
             case OS_MACOS:
             case OS_IOS:
-                oled_set_cursor(oled_max_chars()-2, oled_max_lines()-2);
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-2);
                 oled_write_P(apple_logo[0], false); oled_advance_page(true);
-                oled_set_cursor(oled_max_chars()-2, oled_max_lines()-1);
+                oled_set_cursor(oled_max_chars()-4, oled_max_lines()-1);
                 oled_write_P(apple_logo[1], false); oled_advance_page(true);
                 break;
         }
