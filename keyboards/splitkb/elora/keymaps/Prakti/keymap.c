@@ -33,7 +33,7 @@ bool process_detected_host_os_user(os_variant_t os_variant) {
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case DE_S: // make our ß tap dance more efficient
-            return 160;
+            return 180;
         default:
             return TAPPING_TERM;
     }
@@ -94,6 +94,8 @@ enum custom_keycodes {
     XX_RABK,
     XX_CIRC,
     XX_DEG,
+    XX_RGUI,
+    XX_LGUI,
     CTL_ADIA,
     CTL_ESC,
     XX_OST, // custom keycode to toggle the OS manually
@@ -121,6 +123,8 @@ const uint16_t PROGMEM mac_keycodes[] = {
     XX_MAPPING(XX_RABK, DE_DEG),
     XX_MAPPING(XX_CIRC, DE_LABK),
     XX_MAPPING(XX_DEG, DE_RABK),
+    XX_MAPPING(XX_RGUI, KC_RCTL),
+    XX_MAPPING(XX_LGUI, KC_LCTL),
 };
 
 const uint16_t PROGMEM other_keycodes[] = {
@@ -138,6 +142,8 @@ const uint16_t PROGMEM other_keycodes[] = {
     XX_MAPPING(XX_RABK, DE_RABK),
     XX_MAPPING(XX_CIRC, DE_CIRC),
     XX_MAPPING(XX_DEG, DE_DEG),
+    XX_MAPPING(XX_RGUI, KC_RGUI),
+    XX_MAPPING(XX_LGUI, KC_LGUI),
 };
 
 bool rctl_active = false;
@@ -246,7 +252,7 @@ bool process_mapped_key(uint16_t keycode, keyrecord_t  *record) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode >= XX_HOME && keycode <= XX_DEG) {
+    if (keycode >= XX_HOME && keycode <= XX_LGUI) {
         return process_mapped_key(keycode, record);
     } else if (keycode == CTL_ADIA) {
         return process_ctl_adia(record);
@@ -321,7 +327,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_TAB  , KC_Q ,  KC_W   ,  KC_E  ,   KC_R ,   KC_T ,         KC_LCTL,     KC_RCTL,          DE_Z ,   KC_U ,   KC_I ,   KC_O ,   KC_P , DE_UDIA,
       CTL_ESC , KC_A ,  S_SZ   ,  KC_D  ,   KC_F ,   KC_G ,         KC_LALT,     KC_RALT,          KC_H ,   KC_J ,   KC_K ,   KC_L , DE_ODIA, CTL_ADIA,
       LSFT_CAP, DE_Y ,  KC_X   ,  KC_C  ,   KC_V ,   KC_B , DE_EXLM,KC_CAPS,     FKEYS  , DE_QUES, KC_N ,   KC_M ,   KC_COMM, KC_DOT,KC_SLSH, RSFT_CAP,
-                                 ADJUST , KC_LGUI, KC_LALT, KC_ENT , NAV   ,     SYM    , KC_SPC , KC_RALT, KC_RGUI, KC_APP,
+                                 ADJUST , XX_LGUI, KC_LALT, KC_ENT , NAV   ,     SYM    , KC_SPC , KC_RALT, XX_RGUI, KC_APP,
 
       KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP,    KC_MUTE,                            KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP,    KC_MUTE
     ),
