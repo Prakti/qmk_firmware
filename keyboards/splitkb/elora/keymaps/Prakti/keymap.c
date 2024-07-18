@@ -28,40 +28,12 @@ bool process_detected_host_os_user(os_variant_t os_variant) {
 }
 
 
-// TAP DANCE Configuration
-
-uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case DE_S: // make our ß tap dance more efficient
-            return 180;
-        default:
-            return TAPPING_TERM;
-    }
-}
-
 enum tap_dance_opts {
-    TD_S_SZ,
     TD_LSHIFT_CAPS,
     TD_RSHIFT_CAPS,
 };
 
-void dance_sz(tap_dance_state_t *state, void *user_data) {
-    if (state->count >= 3) {
-        tap_code16(DE_SS);
-        reset_tap_dance(state);
-    } else if (state->count >=2) {
-        tap_code16(DE_S);
-        tap_code16(DE_S);
-        reset_tap_dance(state);
-    } else {
-        tap_code16(DE_S);
-        reset_tap_dance(state);
-    }
-}
-
 tap_dance_action_t tap_dance_actions[] = {
-    // Tap once or twice for 's' and thrice for 'ß'
-    [TD_S_SZ] = ACTION_TAP_DANCE_FN(dance_sz),
     [TD_LSHIFT_CAPS] = ACTION_TAP_DANCE_DOUBLE(KC_LSFT, KC_CAPS),
     [TD_RSHIFT_CAPS] = ACTION_TAP_DANCE_DOUBLE(KC_RSFT, KC_CAPS),
 };
@@ -69,13 +41,14 @@ tap_dance_action_t tap_dance_actions[] = {
 // KEY OVERRIDES
 
 const key_override_t delete_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+const key_override_t sas_sz_override = ko_make_basic(MOD_MASK_ALT, KC_S, DE_SS);
 
 // This globally defines all key overrides to be used
 const key_override_t **key_overrides = (const key_override_t *[]){
 	&delete_key_override,
+    &sas_sz_override,
 	NULL // Null terminate the array of overrides!
 };
-
 
 // Custom Keycodes
 
@@ -295,10 +268,8 @@ enum layers {
 #define FKEYS    MO(_FUNCTION)
 #define ADJUST   MO(_ADJUST)
 
-#define S_SZ     TD(TD_S_SZ)
 #define LSFT_CAP TD(TD_LSHIFT_CAPS)
 #define RSFT_CAP TD(TD_RSHIFT_CAPS)
-
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -325,7 +296,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_QWERTZ] = LAYOUT_myr(
       KC_ESC  , KC_1 ,  KC_2   ,  KC_3  ,   KC_4 ,   KC_5 ,         KC_LSFT,     KC_RSFT,          KC_6 ,   KC_7 ,   KC_8 ,   KC_9 ,   KC_0 , KC_BSPC,
       KC_TAB  , KC_Q ,  KC_W   ,  KC_E  ,   KC_R ,   KC_T ,         KC_LCTL,     KC_RCTL,          DE_Z ,   KC_U ,   KC_I ,   KC_O ,   KC_P , DE_UDIA,
-      CTL_ESC , KC_A ,  S_SZ   ,  KC_D  ,   KC_F ,   KC_G ,         KC_LALT,     KC_RALT,          KC_H ,   KC_J ,   KC_K ,   KC_L , DE_ODIA, CTL_ADIA,
+      CTL_ESC , KC_A ,  KC_S   ,  KC_D  ,   KC_F ,   KC_G ,         KC_LALT,     KC_RALT,          KC_H ,   KC_J ,   KC_K ,   KC_L , DE_ODIA, CTL_ADIA,
       LSFT_CAP, DE_Y ,  KC_X   ,  KC_C  ,   KC_V ,   KC_B , DE_EXLM,KC_CAPS,     FKEYS  , DE_QUES, KC_N ,   KC_M ,   KC_COMM, KC_DOT,KC_SLSH, RSFT_CAP,
                                  ADJUST , XX_LGUI, KC_LALT, KC_ENT , NAV   ,     SYM    , KC_SPC , KC_RALT, XX_RGUI, KC_APP,
 
